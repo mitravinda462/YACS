@@ -10,6 +10,14 @@ from datetime import datetime
 random.seed(42)
 
 class master:
+	''' Shared Data Structures 
+		jobs : list of all the job requests, along with the number of map and reduce tasks
+		workers: list of the dictionaries that has the details of the workers according to the config.json file
+		q: list of lists, each list containing the task details
+	   Shared Variables
+	   	rr : worker index used in Round robin algorithm
+		sche_algo : the scheduling algorithm passed as a command line argument
+	'''
 	def __init__(self):
 		self.jobs=[]
 		self.workers=[]
@@ -19,7 +27,7 @@ class master:
 		self.config_path=sys.argv[1]
 		self.lock=threading.Lock()
 		
-		
+		'''to read the config file and get the details of the workers'''
 		with open(self.config_path,'r') as f:
 			text=''
 			for i in f.readlines():
@@ -33,8 +41,11 @@ class master:
 				thread_name=threading.Thread(target=self.dummy,args=[str(i['port']),str(i['worker_id'])])
 				thread_name.start()'''
 		print("Workers succesfully opened and are listening")
+	'''function to run the worker.py files with port no and worker id passed as arguments'''
 	def dummy(self,port,wid):
 		os.system('python3 worker.py '+port+' '+wid)
+	''' Implementation of Round Robin algorithm, uses a variable rr which gets updated in circular manner 
+	Checks if the worker with index rr has any free slots, if Yes sends the message to the worker, else updates rr and runs until a worker is found'''
 	def round_robin(self,task):
 		if(task[4]==1):
 			return
@@ -64,7 +75,7 @@ class master:
 			self.lock.release()
 			self.round_robin(task)
 		return
-
+	'''Returns the least loaded worker details'''
 	def free_worker(self):
 		max_slots=0
 		max_id=self.workers[0]['worker_id']
@@ -77,7 +88,8 @@ class master:
 				max_i=count
 			count+=1
 		return (max_i,max_id,max_slots)
-			
+	''' Implementation of Least loaded algorithm, where the function free worker is called which returns the least loaded worker and sends a request to the worker.
+	if the worker returned has 0 slots then it waits for 1 sec and  runs until a worker is found'''		
 	def least_load(self,task):
 		while(True):
 			if(task[4]==1):
@@ -103,7 +115,8 @@ class master:
 				return
 			else:
 				time.sleep(1)
-
+	''' Implementation of Random algorithm, where a random worker is chosen and checked if any slots are available,
+	if found then sends the request to the worker, else runs until a worker is found.'''
 	def random_algo(self,task):
 		while(True):
 			if(task[4]==1):
@@ -132,6 +145,8 @@ class master:
 				self.workers[rand_worker_index]['slots']-=1
 				self.lock.release()
 				return
+	''' Function to call the corresponding scheduling algorithms for the tasks taken from the queue,
+	for reduce tasks the dependencies are examined from the jobs data structure by checking the number of maps of the particular job is 0.'''
 	def assign(self):
 		while(True):
 			for j in self.q:
@@ -154,7 +169,8 @@ class master:
 						self.least_load(j)
 					elif(self.sche_algo=="RANDOM"):
 						self.random_algo(j)
-
+	''' Function to listen to job requests from the requests.py at port 5000 and appends the jobs and tasks to the shared data structures, like jobs,q '''
+	
 	def req(self):
 		r=socket.socket()
 		r.bind(("localhost",5000)) 
@@ -182,6 +198,8 @@ class master:
 				self.q.append([job_request['job_id'],i['task_id'],i['duration'],'r',0])
 				self.lock.release()
 
+	''' Function to listen to updates from the workers at port 5001 and parses the update message recevied to get the task id and accordingly removes the task from the queue'''
+				
 	def worker(self):
 		w=socket.socket()
 		w.bind(("localhost",5001))          
@@ -218,7 +236,11 @@ class master:
 						self.lock.acquire()
 						i[1]-=1
 						self.lock.release()
-		
+
+	'''Calls three threads, one for listening to job requests at port number 5000,
+	one for listening for updates from the workers at port 5001,
+	one for scheduling the tasks in the task queue'''
+	
 	def main(self):
 		job_requests=threading.Thread(target=self.req)
 		job_requests.start()
