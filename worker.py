@@ -14,6 +14,7 @@ worker_id=sys.argv[2]
 class worker:
 	def __init__(self):
 		self.req()
+	''' Function which decrements the duration of the task until 0 i.e executes the task and sends a update message to the master at port 5001'''
 	def run1(self,task):
 		duration=task[2]
 		while(duration):
@@ -27,7 +28,7 @@ class worker:
 		with open("logs_worker_"+str(task[5])+'_'+str(task[7])+".txt",'a') as f:
 				f.write(str(task[0])+","+str(task[1])+",task_end,"+str(datetime.now())+"\n")
 		res.send(s.encode())
-
+	''' Function to recieve the task execution message from the master at port specified as the command line argument, and spawns a thread with the function run1 to execute the task'''
 	def req(self):
 		req=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		req.bind(("localhost",port_no))          
