@@ -18,6 +18,8 @@ results_path=os.getcwd()
 if(results_path[len(results_path)-1]!='/'):
 	results_path+='/'
 dformat="%Y-%m-%d %H:%M:%S.%f"
+'''Parses the master and worker log files for each of the algorithm and appends the values to a dictionary,
+	for ease of plotting and calculating mean and median job and task completion times'''
 for name in algo:
 	t=results_path+workers_filename+'*'+name+'.txt'
 	workers=glob.glob(t)
@@ -83,6 +85,7 @@ for name in algo:
 			worker_t[i[2]]+=t
 	times=list(i.total_seconds() for i in worker_t.values())
 	print(times,worker)
+	'''Plot for visualizing the number of tasks scheduled per worker against time for each algorithm.'''
 	plt.plot(worker,times,marker='o')
 	plt.ylabel('TIME')
 	plt.xlabel('NO OF TASKS PER WORKER')
@@ -101,13 +104,14 @@ label1=['mean' for i in jmeans]
 label2=['median' for i in jmedians]
 algo=algo+algo
 label=label1+label2
-
+'''Grouped Bar chart for visualizing the mean and median job completion time for all the algorithms.'''
 nums1=jmeans+jmedians
 df1 = pd.DataFrame(list(zip(algo,nums1,label)), columns =['Algorithm','Time','metrics'])
 sns.barplot(x = 'Algorithm', y = 'Time', hue = 'metrics', data = df1)
 plt.title("Job Completion Times")
 plt.show()
 
+'''Grouped Bar chart for visualizing the mean and median Task completion time for all the algorithms.'''
 nums2=tmeans+tmedians
 df2 = pd.DataFrame(list(zip(algo,nums2,label)), columns =['Algorithm','Time','metrics'])
 sns.barplot(x = 'Algorithm', y = 'Time', hue = 'metrics', data = df2)
