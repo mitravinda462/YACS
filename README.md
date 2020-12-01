@@ -4,17 +4,17 @@
 Team ID BD_0372_1554_1872_1889
 
 ### Libraries required
-Numpy
-Matplotlib
-json
-socket
-time
-sys
-random
-threading
-os
-datetime
-seaborn
+Numpy,
+Matplotlib,
+json,
+socket,
+time,
+sys,
+random,
+threading,
+os,
+datetime,
+seaborn,
 glob
 
 ### Instructions for execution
